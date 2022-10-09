@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 
 object ServiceGenerator {
 
-    private val client: OkHttpClient = OkHttpClient.Builder()
+    val client: OkHttpClient = OkHttpClient.Builder()
         .readTimeout(30, TimeUnit.SECONDS)
         .connectTimeout(30, TimeUnit.SECONDS)
         .build()

@@ -58,12 +58,12 @@ class GateIoSpotClient(
                 mapOf(
                     "text" to text,
                     "currency_pair" to currencyPair,
-                    "type" to type.toString().lowercase(),
-                    "account" to account.toString().lowercase(),
-                    "side" to side.toString().lowercase(),
+                    "type" to type?.text,
+                    "account" to account?.text,
+                    "side" to side.text,
                     "amount" to amount.stripTrailingZeros().toPlainString(),
                     "price" to price.stripTrailingZeros().toPlainString(),
-                    "time_in_force" to timeInForce.toString().lowercase(),
+                    "time_in_force" to timeInForce?.text,
                     "iceberg" to iceberg?.stripTrailingZeros()?.toPlainString(),
                     "auto_borrow" to autoBorrow?.toString(),
                     "auto_repay" to autoRepay?.toString()

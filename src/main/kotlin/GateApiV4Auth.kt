@@ -47,14 +47,10 @@ class GateApiV4Auth(private val apiKey: String, private val apiSecret: String) :
             ts
         )
         return try {
-            val hmacSha512 = Mac.getInstance("HmacSHA512")
-            val spec = SecretKeySpec(apiSecret.toByteArray(), "HmacSHA512")
-            hmacSha512.init(spec)
-            val signature = Hex.encodeHexString(hmacSha512.doFinal(signatureString.toByteArray()))
             val newRequest = request.newBuilder()
                 .removeHeader(HEADER_AUTH_KEY)
                 .addHeader("KEY", apiKey)
-                .addHeader("SIGN", signature)
+                .addHeader("SIGN", sign(apiSecret, signatureString))
                 .addHeader("Timestamp", ts)
                 .build()
             chain.proceed(newRequest)
@@ -64,6 +60,16 @@ class GateApiV4Auth(private val apiKey: String, private val apiSecret: String) :
         } catch (e: NoSuchAlgorithmException) {
             e.printStackTrace()
             chain.proceed(request)
+        }
+    }
+
+    companion object {
+        fun sign(apiSecret: String, stringToSign: String): String {
+            val hmacSha512 = Mac.getInstance("HmacSHA512").apply {
+                val spec = SecretKeySpec(apiSecret.toByteArray(), "HmacSHA512")
+                init(spec)
+            }
+            return Hex.encodeHexString(hmacSha512.doFinal(stringToSign.toByteArray()))
         }
     }
 
