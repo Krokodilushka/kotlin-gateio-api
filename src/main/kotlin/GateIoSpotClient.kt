@@ -41,10 +41,10 @@ class GateIoSpotClient(
             if (!it.startsWith("t-")) {
                 error("Text must starts with 't-'")
             }
-            val bytesCount = it.toByteArray().count()
-            if (bytesCount > 28) {
-                error("Text bytes must be <=28. Current: $bytesCount")
-            }
+//            val bytesCount = it.toByteArray().count()
+//            if (bytesCount > 28) {
+//                error("Text bytes must be <=28. Current: $bytesCount")
+//            }
             val pattern = "[A-Za-z0-9_\\-.]+".toRegex()
             if (!it.matches(pattern)) {
                 error("Text must be ${pattern.pattern}")
@@ -82,6 +82,23 @@ class GateIoSpotClient(
 
     fun tickers() = ServiceGenerator.executeSync(service.tickers())
 
+    fun myTrades(
+        currencyPair: String,
+        limit: Int? = null,
+        page: Int? = null,
+        orderId: Long? = null,
+        account: KucoinApiServiceSpot.Trade.Account? = null,
+        from: String? = null,
+        to: String? = null,
+    ) = ServiceGenerator.executeSync(service.myTrades(currencyPair, limit, page, orderId, account?.text, from, to))
+
+    fun cancelOrder(
+        orderId: String,
+        currencyPair: String,
+        account: KucoinApiServiceSpot.OpenOrders.Order.Account? = null
+    ) =
+        ServiceGenerator.executeSync(service.cancelOrder(orderId, currencyPair, account?.text))
+
     interface KucoinApiServiceSpot {
         @GET("api/v4/spot/currency_pairs")
         fun currencyPairs(): Call<List<CurrencyPair>>
@@ -100,12 +117,26 @@ class GateIoSpotClient(
             val amountPrecision: Int,
             val precision: Int,
             @JsonProperty("trade_status")
-            val tradeStatus: String,
+            val tradeStatus: TradeStatus,
             @JsonProperty("sell_start")
             val sellStart: Long,
             @JsonProperty("buy_start")
             val buyStart: Long
-        )
+        ) {
+            enum class TradeStatus {
+                @JsonProperty("untradable")
+                UNTRADABLE,
+
+                @JsonProperty("buyable")
+                BUYABLE,
+
+                @JsonProperty("sellable")
+                SELLABLE,
+
+                @JsonProperty("tradable")
+                TRADABLE,
+            }
+        }
 
         @Headers(HEADER_AUTH_RETROFIT_HEADER)
         @GET("api/v4/spot/open_orders")
@@ -165,8 +196,8 @@ class GateIoSpotClient(
                     @JsonProperty("closed")
                     CLOSED,
 
-                    @JsonProperty("canceled")
-                    CANCELED
+                    @JsonProperty("cancelled")
+                    CANCELLED
                 }
 
                 @JsonIgnoreProperties(ignoreUnknown = false)
@@ -290,6 +321,53 @@ class GateIoSpotClient(
             @JsonProperty("etf_leverage")
             val etfLeverage: BigDecimal? = null
         )
+
+        @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
+        @GET("api/v4/spot/my_trades")
+        fun myTrades(
+            @Query("currency_pair") currencyPair: String,
+            @Query("limit") limit: Int?,
+            @Query("page") page: Int?,
+            @Query("order_id") orderId: Long?,
+            @Query("account") account: String?,
+            @Query("from") from: String?,
+            @Query("to") to: String?,
+        ): Call<List<Trade>>
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        data class Trade(
+            val id: Long,
+            @JsonProperty("create_time")
+            val createTime: Long,
+            @JsonProperty("create_time_ms")
+            val createTimeMs: String,
+            @JsonProperty("order_id")
+            val orderId: Long,
+            val side: OpenOrders.Order.Side,
+            val role: WebSocketEventSealed.UserTrade.Role,
+            val amount: BigDecimal,
+            val price: BigDecimal,
+            val fee: BigDecimal,
+            @JsonProperty("fee_currency")
+            val feeCurrency: String,
+            @JsonProperty("point_fee")
+            val pointFee: Int,
+            @JsonProperty("gt_fee")
+            val gtFee: Int
+        ) {
+            enum class Account(val text: String) {
+                CROSS_MARGIN("cross_margin"),
+                SPOT("spot")
+            }
+        }
+
+        @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
+        @DELETE("api/v4/spot/orders/{order_id}")
+        fun cancelOrder(
+            @Path("order_id") orderId: String,
+            @Query("currency_pair") currencyPair: String,
+            @Query("account") account: String?,
+        ): Call<OpenOrders.Order>
     }
 
 }

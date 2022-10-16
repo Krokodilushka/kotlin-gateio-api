@@ -37,6 +37,7 @@ class GateIoWebSocketClient(
 
     fun send(message: Request) {
         val jsonString = objectMapper.writeValueAsString(message)
+//        println(jsonString)
         webSocket?.send(jsonString)
     }
 
@@ -63,10 +64,11 @@ class GateIoWebSocketClient(
 
         @JsonProperty("auth")
         val auth: Auth? = authData?.let {
+            val signatureString = String.format("channel=%s&event=%s&time=%d", channel, event.text, time)
             Auth(
                 "api_key",
                 authData.apiKey,
-                GateApiV4Auth.sign(it.apiSecret, "channel=$channel&event=${event.text}&time=$time")
+                GateApiV4Auth.sign(it.apiSecret, signatureString)
             )
         }
 
@@ -162,24 +164,42 @@ sealed class WebSocketEventSealed {
         @JsonProperty("create_time")
         val createTime: Long,
         @JsonProperty("create_time_ms")
-        val createTimeMs: Long,
+        val createTimeMs: String,
         val side: GateIoSpotClient.KucoinApiServiceSpot.OpenOrders.Order.Side,
         val amount: BigDecimal,
-        val role: String,
+        val role: Role,
         val price: BigDecimal,
         val fee: BigDecimal,
         @JsonProperty("point_fee")
         val pointFee: BigDecimal,
         @JsonProperty("gt_fee")
         val gtFee: BigDecimal,
+        @JsonProperty("fee_currency")
+        val fee_currency: String,
         val text: String
-    ) : WebSocketEventSealed() {
+    ) {
         enum class Role {
             @JsonProperty("maker")
             MAKER,
 
             @JsonProperty("taker")
             TAKER
+        }
+
+        @JsonDeserialize(using = TradeEventListDeserializer::class)
+        data class List(val trades: kotlin.collections.List<UserTrade>) : WebSocketEventSealed()
+
+        class TradeEventListDeserializer : JsonDeserializer<List>() {
+
+            private val typeReference = object : TypeReference<kotlin.collections.List<UserTrade>>() {}
+
+            override fun deserialize(jp: JsonParser, ctx: DeserializationContext): List {
+                val node = jp.codec.readTree<JsonNode>(jp)
+                val json = node.toString()
+                val list = JsonToObject.convert(json, typeReference)
+                return List(list)
+            }
+
         }
     }
 
@@ -190,12 +210,12 @@ sealed class WebSocketEventSealed {
         @JsonProperty("create_time")
         val createTime: Long,
         @JsonProperty("create_time_ms")
-        val createTimeMs: Long,
+        val createTimeMs: String,
         @JsonProperty("update_time")
         val updateTime: Long,
         @JsonProperty("update_time_ms")
         val updateTimeMs: Long,
-        val event: String,
+        val event: Event,
         @JsonProperty("currency_pair")
         val currencyPair: String,
         val type: GateIoSpotClient.KucoinApiServiceSpot.OpenOrders.Order.Type,
@@ -220,31 +240,101 @@ sealed class WebSocketEventSealed {
         @JsonProperty("rebated_fee")
         val rebatedFee: BigDecimal,
         @JsonProperty("rebated_fee_currency")
-        val rebatedFeeCurrency: BigDecimal
-    ) : WebSocketEventSealed()
+        val rebatedFeeCurrency: String,
+        @JsonProperty("auto_borrow")
+        val autoBorrow: Boolean,
+        @JsonProperty("auto_repay")
+        val autoRepay: Boolean,
+    ) {
 
+        enum class Event {
+            @JsonProperty("put")
+            PUT,
+
+            @JsonProperty("update")
+            UPDATE,
+
+            @JsonProperty("finish")
+            FINISH
+        }
+
+        @JsonDeserialize(using = OrdersEventListDeserializer::class)
+        data class List(val orders: kotlin.collections.List<Order>) : WebSocketEventSealed()
+
+        class OrdersEventListDeserializer : JsonDeserializer<List>() {
+
+            private val typeReference = object : TypeReference<kotlin.collections.List<Order>>() {}
+
+            override fun deserialize(jp: JsonParser, ctx: DeserializationContext): List {
+                val node = jp.codec.readTree<JsonNode>(jp)
+                val json = node.toString()
+                val list = JsonToObject.convert(json, typeReference)
+                return List(list)
+            }
+
+        }
+    }
+
+    data class CrossBalance(
+        val timestamp: Long,
+        @JsonProperty("timestamp_ms")
+        val timestampMs: Long,
+        val user: Long,
+        val currency: String,
+        val change: BigDecimal,
+        val total: BigDecimal,
+        val available: BigDecimal
+    ) {
+
+        @JsonDeserialize(using = CrossBalancesEventListDeserializer::class)
+        data class List(val crossBalances: kotlin.collections.List<CrossBalance>) : WebSocketEventSealed()
+
+        class CrossBalancesEventListDeserializer : JsonDeserializer<List>() {
+
+            private val typeReference = object : TypeReference<kotlin.collections.List<CrossBalance>>() {}
+
+            override fun deserialize(jp: JsonParser, ctx: DeserializationContext): List {
+                val node = jp.codec.readTree<JsonNode>(jp)
+                val json = node.toString()
+                val list = JsonToObject.convert(json, typeReference)
+                return List(list)
+            }
+
+        }
+    }
+
+    data class CrossLoan(
+        val timestamp: Long,
+        val user: Long,
+        val currency: String,
+        val change: BigDecimal,
+        val total: BigDecimal,
+        val available: BigDecimal,
+        val borrowed: BigDecimal,
+        val interest: BigDecimal
+    ) : WebSocketEventSealed()
 }
 
 class ServerEventDeserializer : JsonDeserializer<WebSocketEvent<*>>() {
 
-    private val subscribeEvent =
-        object : TypeReference<WebSocketEventSealed.SubscribeEvent>() {}
+    private val subscribeEvent = object : TypeReference<WebSocketEventSealed.SubscribeEvent>() {}
+    private val ordersEvent = object : TypeReference<WebSocketEventSealed.Order.List>() {}
+    private val crossBalancesEvent = object : TypeReference<WebSocketEventSealed.CrossBalance.List>() {}
+    private val tradeEvent = object : TypeReference<WebSocketEventSealed.UserTrade.List>() {}
 
-    override fun deserialize(
-        jp: JsonParser,
-        ctx: DeserializationContext
-    ): WebSocketEvent<*> {
-        val jsonToObject = JsonToObject()
+    override fun deserialize(jp: JsonParser, ctx: DeserializationContext): WebSocketEvent<*> {
         val node = jp.codec.readTree<JsonNode>(jp)
         val result = node["result"].toString()
         val channel = node["channel"].textValue()
         val event = when (val event = node["event"].textValue()) {
-            "subscribe" -> jsonToObject.convert(result, subscribeEvent)
-            "unsubscribe" -> jsonToObject.convert(result, subscribeEvent)
+            "subscribe" -> JsonToObject.convert(result, subscribeEvent)
+            "unsubscribe" -> JsonToObject.convert(result, subscribeEvent)
             "update" -> when (channel) {
-                "spot.tickers" -> jsonToObject.convert(result, WebSocketEventSealed.Ticker::class.java)
-                "spot.usertrades" -> jsonToObject.convert(result, WebSocketEventSealed.UserTrade::class.java)
-                "spot.orders" -> jsonToObject.convert(result, WebSocketEventSealed.Order::class.java)
+                "spot.tickers" -> JsonToObject.convert(result, WebSocketEventSealed.Ticker::class.java)
+                "spot.usertrades" -> JsonToObject.convert(result, tradeEvent)
+                "spot.orders" -> JsonToObject.convert(result, ordersEvent)
+                "spot.cross_balances" -> JsonToObject.convert(result, crossBalancesEvent)
+                "spot.cross_loan" -> JsonToObject.convert(result, WebSocketEventSealed.CrossLoan::class.java)
                 else -> {
                     error("Channel \"$channel\" not found")
                 }
@@ -262,15 +352,15 @@ class ServerEventDeserializer : JsonDeserializer<WebSocketEvent<*>>() {
         )
         return WebSocketEvent(res)
     }
-
-    class JsonToObject {
-        private var mapper = ObjectMapper().registerKotlinModule()
-        fun <T> convert(json: String?, clazz: Class<T>): T = mapper.readValue(json, clazz)
-        fun <T> convert(json: String?, clazz: TypeReference<T>): T = mapper.readValue(json, clazz)
-    }
 }
 
-class BinanceApiWebSocketListener<T>(private val callback: GateIoWebSocketClient.WebSocketCallback<T>) :
+object JsonToObject {
+    private var mapper = ObjectMapper().registerKotlinModule()
+    fun <T> convert(json: String?, clazz: Class<T>): T = mapper.readValue(json, clazz)
+    fun <T> convert(json: String?, clazz: TypeReference<T>): T = mapper.readValue(json, clazz)
+}
+
+class GateIoApiWebSocketListener<T>(private val callback: GateIoWebSocketClient.WebSocketCallback<T>) :
     WebSocketListener() where T : WebSocketEventSealed {
 
     private val mapper = ObjectMapper().registerKotlinModule()

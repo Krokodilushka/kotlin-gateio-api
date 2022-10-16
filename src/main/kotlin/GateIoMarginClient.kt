@@ -29,6 +29,8 @@ class GateIoMarginClient(
 
     fun currencyPairs() = ServiceGenerator.executeSync(service.currencyPairs())
 
+    fun currencies() = ServiceGenerator.executeSync(service.currencies())
+
     interface KucoinApiServiceMargin {
 
         @Headers(HEADER_AUTH_RETROFIT_HEADER)
@@ -69,7 +71,7 @@ class GateIoMarginClient(
 
         @Headers(HEADER_AUTH_RETROFIT_HEADER)
         @POST("api/v4/margin/cross/repayments")
-        fun repayments(@Body text: Map<String, String?>): Call<Repayments>
+        fun repayments(@Body text: Map<String, String?>): Call<List<Repayments>>
 
         @JsonIgnoreProperties(ignoreUnknown = true)
         data class Repayments(
@@ -117,6 +119,26 @@ class GateIoMarginClient(
             @JsonProperty("max_quote_amount")
             val maxQuoteAmount: BigDecimal?,
             val status: Int,
+        )
+
+        @Headers(HEADER_AUTH_RETROFIT_HEADER)
+        @GET("api/v4/margin/cross/currencies")
+        fun currencies(): Call<List<Currency>>
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        data class Currency(
+            val name: String,
+            val rate: BigDecimal,
+            val prec: BigDecimal,
+            val discount: BigDecimal,
+            @JsonProperty("min_borrow_amount")
+            val minBorrowAmount: BigDecimal,
+            @JsonProperty("user_max_borrow_amount")
+            val userMaxBorrowAmount: BigDecimal,
+            @JsonProperty("total_max_borrow_amount")
+            val totalMaxBorrowAmount: BigDecimal,
+            val price: BigDecimal,
+            val status: Int
         )
     }
 }
