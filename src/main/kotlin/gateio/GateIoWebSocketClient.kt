@@ -1,5 +1,6 @@
 package gateio
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -315,6 +316,26 @@ sealed class WebSocketEventSealed {
         val borrowed: BigDecimal,
         val interest: BigDecimal
     ) : WebSocketEventSealed()
+
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class ChangedOrderBookLevels(
+        @JsonProperty("t")
+        val updateTime: Long,
+        @JsonProperty("s")
+        val symbol: String,
+        @JsonProperty("U")
+        val firstUpdateId: Long,
+        @JsonProperty("u")
+        val lastUpdateId: Long,
+        @JsonProperty("b")
+        val bids: List<PriceLevel>,
+        @JsonProperty("a")
+        val asks: List<PriceLevel>,
+    ) : WebSocketEventSealed() {
+        @JsonFormat(shape = JsonFormat.Shape.ARRAY)
+        data class PriceLevel(val price: BigDecimal, val amount: BigDecimal)
+    }
 }
 
 class ServerEventDeserializer : JsonDeserializer<WebSocketEvent<*>>() {
@@ -337,6 +358,11 @@ class ServerEventDeserializer : JsonDeserializer<WebSocketEvent<*>>() {
                 "spot.orders" -> JsonToObject.convert(result, ordersEvent)
                 "spot.cross_balances" -> JsonToObject.convert(result, crossBalancesEvent)
                 "spot.cross_loan" -> JsonToObject.convert(result, WebSocketEventSealed.CrossLoan::class.java)
+                "spot.order_book_update" -> JsonToObject.convert(
+                    result,
+                    WebSocketEventSealed.ChangedOrderBookLevels::class.java
+                )
+
                 else -> {
                     error("Channel \"$channel\" not found")
                 }
