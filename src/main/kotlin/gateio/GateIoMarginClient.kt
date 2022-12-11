@@ -1,3 +1,5 @@
+package gateio
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import retrofit2.Call

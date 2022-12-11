@@ -1,3 +1,5 @@
+package gateio
+
 fun main() {
     val key = "1"
     val secret = "2"
@@ -6,10 +8,10 @@ fun main() {
 //    currencyPairs().body()?.forEach {
 //        println(it)
 //    }
-//        myTrades("BTC_USDT", account = GateIoSpotClient.KucoinApiServiceSpot.Trade.Account.CROSS_MARGIN).body()?.also {
+//        myTrades("BTC_USDT", account = gateio.GateIoSpotClient.KucoinApiServiceSpot.Trade.Account.CROSS_MARGIN).body()?.also {
 //            println(it)
 //        }
-//        openOrders(account = GateIoSpotClient.KucoinApiServiceSpot.OpenOrders.Order.Account.CROSS_MARGIN).body()
+//        openOrders(account = gateio.GateIoSpotClient.KucoinApiServiceSpot.OpenOrders.Order.Account.CROSS_MARGIN).body()
 //            ?.also {
 //                println(it)
 //            }
@@ -28,7 +30,7 @@ fun main() {
 //    ).body()?.also {
 //        println(it)
 //    }
-//        candlesticks("BTC_USDT", interval = GateIoSpotClient.KucoinApiServiceSpot.CandletickInterval.D1).body()?.also {
+//        candlesticks("BTC_USDT", interval = gateio.GateIoSpotClient.KucoinApiServiceSpot.CandletickInterval.D1).body()?.also {
 //            println(it)
 //        }
 //        tickers().body()?.forEach {
@@ -116,11 +118,11 @@ fun main() {
 //            .filter { it=="BTC_USDT" }
 //            .take(1)
 //            .forEachIndexed { index, s ->
-//                val r = GateIoWebSocketClient.Request(
+//                val r = gateio.GateIoWebSocketClient.Request(
 //                    id = index.toLong(),
 //                    time = System.currentTimeMillis()/1000,
 //                    channel = "spot.tickers",
-//                    event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+//                    event = gateio.GateIoWebSocketClient.Request.Method.SUBSCRIBE,
 //                    payload = listOf(s),
 //                )
 //                send(r)

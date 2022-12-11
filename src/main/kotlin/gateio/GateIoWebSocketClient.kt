@@ -1,3 +1,5 @@
+package gateio
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -165,7 +167,7 @@ sealed class WebSocketEventSealed {
         val createTime: Long,
         @JsonProperty("create_time_ms")
         val createTimeMs: String,
-        val side: GateIoSpotClient.KucoinApiServiceSpot.OpenOrders.Order.Side,
+        val side: GateIoSpotClient.GateIoApiServiceSpot.OpenOrders.Order.Side,
         val amount: BigDecimal,
         val role: Role,
         val price: BigDecimal,
@@ -218,13 +220,13 @@ sealed class WebSocketEventSealed {
         val event: Event,
         @JsonProperty("currency_pair")
         val currencyPair: String,
-        val type: GateIoSpotClient.KucoinApiServiceSpot.OpenOrders.Order.Type,
-        val account: GateIoSpotClient.KucoinApiServiceSpot.OpenOrders.Order.Account,
-        val side: GateIoSpotClient.KucoinApiServiceSpot.OpenOrders.Order.Side,
+        val type: GateIoSpotClient.GateIoApiServiceSpot.OpenOrders.Order.Type,
+        val account: GateIoSpotClient.GateIoApiServiceSpot.OpenOrders.Order.Account,
+        val side: GateIoSpotClient.GateIoApiServiceSpot.OpenOrders.Order.Side,
         val amount: BigDecimal,
         val price: BigDecimal,
         @JsonProperty("time_in_force")
-        val timeInForce: GateIoSpotClient.KucoinApiServiceSpot.OpenOrders.Order.TimeInForce,
+        val timeInForce: GateIoSpotClient.GateIoApiServiceSpot.OpenOrders.Order.TimeInForce,
         val left: BigDecimal,
         @JsonProperty("filled_total")
         val filledTotal: BigDecimal,

@@ -1,3 +1,5 @@
+package gateio
+
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -14,29 +16,29 @@ class GateIoSpotClient(
 ) {
 
     private val service =
-        ServiceGenerator.createService(KucoinApiServiceSpot::class.java, apiKey, secret, baseUrl)
+        ServiceGenerator.createService(GateIoApiServiceSpot::class.java, apiKey, secret, baseUrl)
 
     fun currencyPairs() = ServiceGenerator.executeSync(service.currencyPairs())
 
     fun openOrders(
         page: Int? = null,
         limit: Int? = null,
-        account: KucoinApiServiceSpot.OpenOrders.Order.Account? = null
+        account: GateIoApiServiceSpot.OpenOrders.Order.Account? = null
     ) = ServiceGenerator.executeSync(service.openOrders(page, limit, account?.text))
 
     fun createOrder(
         text: String? = null,
         currencyPair: String,
-        type: KucoinApiServiceSpot.OpenOrders.Order.Type? = null,
-        account: KucoinApiServiceSpot.OpenOrders.Order.Account? = null,
-        side: KucoinApiServiceSpot.OpenOrders.Order.Side,
+        type: GateIoApiServiceSpot.OpenOrders.Order.Type? = null,
+        account: GateIoApiServiceSpot.OpenOrders.Order.Account? = null,
+        side: GateIoApiServiceSpot.OpenOrders.Order.Side,
         amount: BigDecimal,
         price: BigDecimal,
-        timeInForce: KucoinApiServiceSpot.OpenOrders.Order.TimeInForce? = null,
+        timeInForce: GateIoApiServiceSpot.OpenOrders.Order.TimeInForce? = null,
         iceberg: BigDecimal? = null,
         autoBorrow: Boolean? = null,
         autoRepay: Boolean? = null,
-    ): Response<KucoinApiServiceSpot.OpenOrders.Order> {
+    ): Response<GateIoApiServiceSpot.OpenOrders.Order> {
         text?.also {
             if (!it.startsWith("t-")) {
                 error("Text must starts with 't-'")
@@ -77,7 +79,7 @@ class GateIoSpotClient(
         limit: Int? = null,
         from: Long? = null,
         to: Long? = null,
-        interval: KucoinApiServiceSpot.Candletick.CandletickInterval? = null
+        interval: GateIoApiServiceSpot.Candletick.CandletickInterval? = null
     ) = ServiceGenerator.executeSync(service.candlesticks(currencyPair, limit, from, to, interval?.text))
 
     fun tickers() = ServiceGenerator.executeSync(service.tickers())
@@ -87,7 +89,7 @@ class GateIoSpotClient(
         limit: Int? = null,
         page: Int? = null,
         orderId: Long? = null,
-        account: KucoinApiServiceSpot.Trade.Account? = null,
+        account: GateIoApiServiceSpot.Trade.Account? = null,
         from: String? = null,
         to: String? = null,
     ) = ServiceGenerator.executeSync(service.myTrades(currencyPair, limit, page, orderId, account?.text, from, to))
@@ -95,11 +97,19 @@ class GateIoSpotClient(
     fun cancelOrder(
         orderId: String,
         currencyPair: String,
-        account: KucoinApiServiceSpot.OpenOrders.Order.Account? = null
+        account: GateIoApiServiceSpot.OpenOrders.Order.Account? = null
     ) =
         ServiceGenerator.executeSync(service.cancelOrder(orderId, currencyPair, account?.text))
 
-    interface KucoinApiServiceSpot {
+    fun orderBook(
+        currencyPair: String,
+        interval: String? = null,
+        limit: Int? = null,
+        withId: Boolean? = null,
+    ) =
+        ServiceGenerator.executeSync(service.orderBook(currencyPair, interval, limit, withId))
+
+    interface GateIoApiServiceSpot {
         @GET("api/v4/spot/currency_pairs")
         fun currencyPairs(): Call<List<CurrencyPair>>
 
@@ -368,6 +378,27 @@ class GateIoSpotClient(
             @Query("currency_pair") currencyPair: String,
             @Query("account") account: String?,
         ): Call<OpenOrders.Order>
+
+        @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
+        @GET("api/v4/spot/order_book")
+        fun orderBook(
+            @Query("currency_pair") currencyPair: String,
+            @Query("interval") interval: String?,
+            @Query("limit") limit: Int?,
+            @Query("with_id") withId: Boolean?,
+        ): Call<OrderBook>
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        data class OrderBook(
+            val id: Long,
+            val current: Long,
+            val update: Long,
+            val asks: List<PriceLevel>,
+            val bids: List<PriceLevel>,
+        ) {
+            @JsonFormat(shape = JsonFormat.Shape.ARRAY)
+            data class PriceLevel(val price: BigDecimal, val amount: BigDecimal)
+        }
     }
 
 }
