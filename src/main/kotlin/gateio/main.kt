@@ -36,6 +36,7 @@ fun main() {
 //        tickers().body()?.forEach {
 //            println(it)
 //        }
+        time().body()?.also(::println)
     }
 
     GateIoMarginClient(key, secret, url).apply {
@@ -50,11 +51,11 @@ fun main() {
 //                println(it)
 //            }
 //        }
-        currencies().body()!!.also {
-            it.forEach {
-                println(it)
-            }
-        }
+//        currencies().body()!!.also {
+//            it.forEach {
+//                println(it)
+//            }
+//        }
     }
 
     val listener = GateIoApiWebSocketListener(object : GateIoWebSocketClient.WebSocketCallback<WebSocketEventSealed> {
@@ -97,6 +98,9 @@ fun main() {
                         }
                     }
 
+                    is WebSocketEventSealed.ChangedOrderBookLevels -> {
+                        println("ChangedOrderBookLevels: ${eventWrapper.serverEvent.result}")
+                    }
                 }
             }
             eventWrapper.serverEvent.error?.also {
@@ -109,9 +113,9 @@ fun main() {
             throw cause
         }
     })
-    GateIoWebSocketClient("wss://api.gateio.ws", ServiceGenerator.client, listener).apply {
-        connect()
-        val marginClient = GateIoMarginClient(key, secret, url)
+//    GateIoWebSocketClient("wss://api.gateio.ws", ServiceGenerator.client, listener).apply {
+//        connect()
+//        val marginClient = GateIoMarginClient(key, secret, url)
 //        val currencyPairs = marginClient.currencyPairs().body()!!.map { it.id }
 //        println("currencyPairs: ${currencyPairs.filter { it.contains("BTC") }}")
 //        currencyPairs
@@ -127,40 +131,46 @@ fun main() {
 //                )
 //                send(r)
 //            }
-        GateIoWebSocketClient.Request(
-            time = System.currentTimeMillis() / 1000,
-            channel = "spot.orders",
-            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-            payload = listOf("BTC_USDT"),
-            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
-        ).also {
-            send(it)
-        }
-        GateIoWebSocketClient.Request(
-            time = System.currentTimeMillis() / 1000,
-            channel = "spot.cross_balances",
-            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
-        ).also {
-            send(it)
-        }
-        GateIoWebSocketClient.Request(
-            time = System.currentTimeMillis() / 1000,
-            channel = "spot.cross_loan",
-            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
-        ).also {
-            send(it)
-        }
-        GateIoWebSocketClient.Request(
-            time = System.currentTimeMillis() / 1000,
-            channel = "spot.usertrades",
-            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-            payload = listOf("!all"),
-            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
-        ).also {
-            send(it)
-        }
-    }
-    Thread.sleep(6000000L)
+//        GateIoWebSocketClient.Request(
+//            time = System.currentTimeMillis() / 1000,
+//            channel = "spot.orders",
+//            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+//            payload = listOf("BTC_USDT"),
+//            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
+//        ).also {
+//            send(it)
+//        }
+//        GateIoWebSocketClient.Request(
+//            time = System.currentTimeMillis() / 1000,
+//            channel = "spot.cross_balances",
+//            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+//            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
+//        ).also {
+//            send(it)
+//        }
+//        GateIoWebSocketClient.Request(
+//            time = System.currentTimeMillis() / 1000,
+//            channel = "spot.cross_loan",
+//            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+//            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
+//        ).also {
+//            send(it)
+//        }
+//        GateIoWebSocketClient.Request(
+//            time = System.currentTimeMillis() / 1000,
+//            channel = "spot.usertrades",
+//            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+//            payload = listOf("!all"),
+//            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
+//        ).also {
+//            send(it)
+//        }
+//        GateIoWebSocketClient.Request(
+//            System.currentTimeMillis() / 1000,
+//            channel = "spot.order_book_update",
+//            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+//            payload = listOf("BTC_USDT", "100ms")
+//        ).also(::send)
+//    }
+//    Thread.sleep(6000000L)
 }

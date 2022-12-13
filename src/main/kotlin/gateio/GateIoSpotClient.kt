@@ -109,6 +109,8 @@ class GateIoSpotClient(
     ) =
         ServiceGenerator.executeSync(service.orderBook(currencyPair, interval, limit, withId))
 
+    fun time() = ServiceGenerator.executeSync(service.time())
+
     interface GateIoApiServiceSpot {
         @GET("api/v4/spot/currency_pairs")
         fun currencyPairs(): Call<List<CurrencyPair>>
@@ -399,6 +401,15 @@ class GateIoSpotClient(
             @JsonFormat(shape = JsonFormat.Shape.ARRAY)
             data class PriceLevel(val price: BigDecimal, val amount: BigDecimal)
         }
+
+        @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
+        @GET("api/v4/spot/time")
+        fun time(): Call<Time>
+
+        data class Time(
+            @JsonProperty("server_time")
+            val serverTime: Long,
+        )
     }
 
 }
