@@ -36,7 +36,8 @@ fun main() {
 //        tickers().body()?.forEach {
 //            println(it)
 //        }
-        time().body()?.also(::println)
+//        time().body()?.also(::println)
+        accounts().body()?.also(::println)
     }
 
     GateIoMarginClient(key, secret, url).apply {

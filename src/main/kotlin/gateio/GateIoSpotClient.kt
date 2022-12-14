@@ -111,6 +111,8 @@ class GateIoSpotClient(
 
     fun time() = ServiceGenerator.executeSync(service.time())
 
+    fun accounts() = ServiceGenerator.executeSync(service.accounts())
+
     interface GateIoApiServiceSpot {
         @GET("api/v4/spot/currency_pairs")
         fun currencyPairs(): Call<List<CurrencyPair>>
@@ -409,6 +411,16 @@ class GateIoSpotClient(
         data class Time(
             @JsonProperty("server_time")
             val serverTime: Long,
+        )
+
+        @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
+        @GET("api/v4/spot/accounts")
+        fun accounts(): Call<List<Accounts>>
+
+        data class Accounts(
+            val currency: String,
+            val available: BigDecimal,
+            val locked: BigDecimal,
         )
     }
 
