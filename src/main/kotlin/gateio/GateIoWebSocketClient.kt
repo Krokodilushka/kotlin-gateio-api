@@ -104,6 +104,7 @@ sealed class WebSocketEventSealed {
     @JsonIgnoreProperties(ignoreUnknown = false)
     data class ServerEvent<T : WebSocketEventSealed>(
         val time: Long,
+        val timeMs: Long?,
         val id: Long?,
         val channel: String,
         val event: String,
@@ -178,7 +179,7 @@ sealed class WebSocketEventSealed {
         @JsonProperty("gt_fee")
         val gtFee: BigDecimal,
         @JsonProperty("fee_currency")
-        val fee_currency: String,
+        val feeCurrency: String,
         val text: String
     ) {
         enum class Role {
@@ -288,21 +289,17 @@ sealed class WebSocketEventSealed {
         val total: BigDecimal,
         val available: BigDecimal
     ) {
-
         @JsonDeserialize(using = CrossBalancesEventListDeserializer::class)
         data class List(val crossBalances: kotlin.collections.List<CrossBalance>) : WebSocketEventSealed()
 
         class CrossBalancesEventListDeserializer : JsonDeserializer<List>() {
-
             private val typeReference = object : TypeReference<kotlin.collections.List<CrossBalance>>() {}
-
             override fun deserialize(jp: JsonParser, ctx: DeserializationContext): List {
                 val node = jp.codec.readTree<JsonNode>(jp)
                 val json = node.toString()
                 val list = JsonToObject.convert(json, typeReference)
                 return List(list)
             }
-
         }
     }
 
@@ -336,6 +333,35 @@ sealed class WebSocketEventSealed {
         @JsonFormat(shape = JsonFormat.Shape.ARRAY)
         data class PriceLevel(val price: BigDecimal, val amount: BigDecimal)
     }
+
+    data class SpotBalance(
+        val timestamp: Long,
+        @JsonProperty("timestamp_ms")
+        val timestampMs: Long,
+        val user: Long,
+        val currency: String,
+        val change: BigDecimal,
+        val total: BigDecimal,
+        val available: BigDecimal,
+        val freeze: BigDecimal,
+        @JsonProperty("freeze_change")
+        val freezeChange: BigDecimal,
+        @JsonProperty("change_type")
+        val changeType: String,
+    ) {
+        @JsonDeserialize(using = SpotBalancesEventListDeserializer::class)
+        data class List(val spotBalances: kotlin.collections.List<SpotBalance>) : WebSocketEventSealed()
+
+        class SpotBalancesEventListDeserializer : JsonDeserializer<List>() {
+            private val typeReference = object : TypeReference<kotlin.collections.List<SpotBalance>>() {}
+            override fun deserialize(jp: JsonParser, ctx: DeserializationContext): List {
+                val node = jp.codec.readTree<JsonNode>(jp)
+                val json = node.toString()
+                val list = JsonToObject.convert(json, typeReference)
+                return List(list)
+            }
+        }
+    }
 }
 
 class ServerEventDeserializer : JsonDeserializer<WebSocketEvent<*>>() {
@@ -343,6 +369,7 @@ class ServerEventDeserializer : JsonDeserializer<WebSocketEvent<*>>() {
     private val subscribeEvent = object : TypeReference<WebSocketEventSealed.SubscribeEvent>() {}
     private val ordersEvent = object : TypeReference<WebSocketEventSealed.Order.List>() {}
     private val crossBalancesEvent = object : TypeReference<WebSocketEventSealed.CrossBalance.List>() {}
+    private val spotBalancesEvent = object : TypeReference<WebSocketEventSealed.SpotBalance.List>() {}
     private val tradeEvent = object : TypeReference<WebSocketEventSealed.UserTrade.List>() {}
 
     override fun deserialize(jp: JsonParser, ctx: DeserializationContext): WebSocketEvent<*> {
@@ -357,6 +384,7 @@ class ServerEventDeserializer : JsonDeserializer<WebSocketEvent<*>>() {
                 "spot.usertrades" -> JsonToObject.convert(result, tradeEvent)
                 "spot.orders" -> JsonToObject.convert(result, ordersEvent)
                 "spot.cross_balances" -> JsonToObject.convert(result, crossBalancesEvent)
+                "spot.balances" -> JsonToObject.convert(result, spotBalancesEvent)
                 "spot.cross_loan" -> JsonToObject.convert(result, WebSocketEventSealed.CrossLoan::class.java)
                 "spot.order_book_update" -> JsonToObject.convert(
                     result,
@@ -372,6 +400,7 @@ class ServerEventDeserializer : JsonDeserializer<WebSocketEvent<*>>() {
         }
         val res = WebSocketEventSealed.ServerEvent(
             time = node["time"].asLong(),
+            timeMs = node["time_ms"]?.asLong(),
             id = node["id"]?.asLong(),
             channel = node["channel"].toString(),
             event = node["result"].toString(),
