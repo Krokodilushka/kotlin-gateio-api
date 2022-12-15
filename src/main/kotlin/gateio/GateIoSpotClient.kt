@@ -188,6 +188,8 @@ class GateIoSpotClient(
                 val left: BigDecimal,
                 @JsonProperty("filled_total")
                 val filledTotal: BigDecimal,
+                @JsonProperty("avg_deal_price")
+                val avgDealPrice: BigDecimal,
                 val fee: BigDecimal,
                 @JsonProperty("fee_currency")
                 val feeCurrency: String,
@@ -217,7 +219,10 @@ class GateIoSpotClient(
                 @JsonIgnoreProperties(ignoreUnknown = false)
                 enum class Type(val text: String) {
                     @JsonProperty("limit")
-                    LIMIT("limit")
+                    LIMIT("limit"),
+
+                    @JsonProperty("market")
+                    MARKET("market")
                 }
 
                 @JsonIgnoreProperties(ignoreUnknown = false)

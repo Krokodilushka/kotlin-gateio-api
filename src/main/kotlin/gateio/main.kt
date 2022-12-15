@@ -1,8 +1,8 @@
 package gateio
 
 fun main() {
-    val key = "1"
-    val secret = "2"
+    val key = "89485d17e975515130891c91426088f4"
+    val secret = "875ca865b69face19442381bac5ebca12bc9445ab2c582f369952edb5232a4f0"
     val url = "https://api.gateio.ws/"
     GateIoSpotClient(key, secret, url).apply {
 //    currencyPairs().body()?.forEach {
@@ -182,7 +182,8 @@ fun main() {
         GateIoWebSocketClient.Request(
             System.currentTimeMillis() / 1000,
             channel = "spot.balances",
-            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE
+            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
         ).also(::send)
     }
     Thread.sleep(6000000L)

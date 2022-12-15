@@ -207,6 +207,8 @@ sealed class WebSocketEventSealed {
         }
     }
 
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     data class Order(
         val id: Long,
         val user: Long,
@@ -232,6 +234,8 @@ sealed class WebSocketEventSealed {
         val left: BigDecimal,
         @JsonProperty("filled_total")
         val filledTotal: BigDecimal,
+        @JsonProperty("avg_deal_price")
+        val avgDealPrice: BigDecimal,
         val fee: BigDecimal,
         @JsonProperty("fee_currency")
         val feeCurrency: String,
