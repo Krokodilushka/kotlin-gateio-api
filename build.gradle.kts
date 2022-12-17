@@ -25,7 +25,7 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             groupId = "org.krokodilushka"
-            artifactId = "kotin-gateio-api"
+            artifactId = "kotlin-gateio-api"
             version = "1.0.0"
 
             from(components["java"])
