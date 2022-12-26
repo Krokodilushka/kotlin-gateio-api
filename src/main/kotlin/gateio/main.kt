@@ -37,7 +37,16 @@ fun main() {
 //            println(it)
 //        }
 //        time().body()?.also(::println)
-//        accounts().body()?.also(::println)
+        withdrawStatus().body()?.forEach {
+            println(it)
+//            currencyChains(it.currency).body()!!.forEach(::println)
+        }
+//        currencyChains("GOD").body()?.also {
+//            println(it)
+//        }
+//        generateCurrencyDepositAddress("WTC").body()?.also {
+//            println(it)
+//        }
     }
 
     GateIoMarginClient(key, secret, url).apply {
@@ -58,133 +67,134 @@ fun main() {
 //            }
 //        }
     }
-
-    val listener = GateIoApiWebSocketListener(object : GateIoWebSocketClient.WebSocketCallback<WebSocketEventSealed> {
-        override fun onEvent(eventWrapper: WebSocketEvent<WebSocketEventSealed>) {
-            println("Event: $eventWrapper")
-            eventWrapper.serverEvent.result?.also {
-                when (it) {
-                    is WebSocketEventSealed.Ticker -> {
-//                        println("Ticker: ${eventWrapper.serverEvent}")
-                    }
-
-                    is WebSocketEventSealed.SubscribeEvent -> {
-                        println("SubscribeEvent: $eventWrapper")
-                    }
-
-                    is WebSocketEventSealed.UserTrade.List -> {
-                        println("UserTrade: ${eventWrapper.serverEvent}")
-                    }
-
-                    is WebSocketEventSealed.Order.List -> {
-                        println("Orders:")
-                        eventWrapper.serverEvent.result as WebSocketEventSealed.Order.List
-                        eventWrapper.serverEvent.result.orders.forEach {
-                            println("Order: $it")
+    /*
+        val listener = GateIoApiWebSocketListener(object : GateIoWebSocketClient.WebSocketCallback<WebSocketEventSealed> {
+            override fun onEvent(eventWrapper: WebSocketEvent<WebSocketEventSealed>) {
+                println("Event: $eventWrapper")
+                eventWrapper.serverEvent.result?.also {
+                    when (it) {
+                        is WebSocketEventSealed.Ticker -> {
+    //                        println("Ticker: ${eventWrapper.serverEvent}")
                         }
-                    }
 
-                    is WebSocketEventSealed.CrossBalance.List -> {
-                        println("CrossBalances:")
-                        eventWrapper.serverEvent.result as WebSocketEventSealed.CrossBalance.List
-                        eventWrapper.serverEvent.result.crossBalances.forEach {
-                            println("CrossBalance: $it")
+                        is WebSocketEventSealed.SubscribeEvent -> {
+                            println("SubscribeEvent: $eventWrapper")
                         }
-                    }
 
-                    is WebSocketEventSealed.CrossLoan -> {
-                        println("CrossLoan:")
-                        eventWrapper.serverEvent.result as WebSocketEventSealed.CrossLoan
-                        eventWrapper.serverEvent.result.also {
-                            println("CrossLoan: $it")
+                        is WebSocketEventSealed.UserTrade.List -> {
+                            println("UserTrade: ${eventWrapper.serverEvent}")
                         }
-                    }
 
-                    is WebSocketEventSealed.ChangedOrderBookLevels -> {
-                        println("ChangedOrderBookLevels: ${eventWrapper.serverEvent.result}")
-                    }
+                        is WebSocketEventSealed.Order.List -> {
+                            println("Orders:")
+                            eventWrapper.serverEvent.result as WebSocketEventSealed.Order.List
+                            eventWrapper.serverEvent.result.orders.forEach {
+                                println("Order: $it")
+                            }
+                        }
 
-                    is WebSocketEventSealed.SpotBalance.List -> {
-                        println("SpotBalance:")
-                        eventWrapper.serverEvent.result as WebSocketEventSealed.SpotBalance.List
-                        eventWrapper.serverEvent.result.spotBalances.forEach {
-                            println("SpotBalance: $it")
+                        is WebSocketEventSealed.CrossBalance.List -> {
+                            println("CrossBalances:")
+                            eventWrapper.serverEvent.result as WebSocketEventSealed.CrossBalance.List
+                            eventWrapper.serverEvent.result.crossBalances.forEach {
+                                println("CrossBalance: $it")
+                            }
+                        }
+
+                        is WebSocketEventSealed.CrossLoan -> {
+                            println("CrossLoan:")
+                            eventWrapper.serverEvent.result as WebSocketEventSealed.CrossLoan
+                            eventWrapper.serverEvent.result.also {
+                                println("CrossLoan: $it")
+                            }
+                        }
+
+                        is WebSocketEventSealed.ChangedOrderBookLevels -> {
+                            println("ChangedOrderBookLevels: ${eventWrapper.serverEvent.result}")
+                        }
+
+                        is WebSocketEventSealed.SpotBalance.List -> {
+                            println("SpotBalance:")
+                            eventWrapper.serverEvent.result as WebSocketEventSealed.SpotBalance.List
+                            eventWrapper.serverEvent.result.spotBalances.forEach {
+                                println("SpotBalance: $it")
+                            }
                         }
                     }
                 }
+                eventWrapper.serverEvent.error?.also {
+                    println("Error: $it")
+                }
             }
-            eventWrapper.serverEvent.error?.also {
-                println("Error: $it")
-            }
-        }
 
-        override fun onFailure(cause: Throwable) {
-            println("onFailure: $cause")
-            throw cause
+            override fun onFailure(cause: Throwable) {
+                println("onFailure: $cause")
+                throw cause
+            }
+        })
+        GateIoWebSocketClient("wss://api.gateio.ws", ServiceGenerator.client, listener).apply {
+            connect()
+    //        val marginClient = GateIoMarginClient(key, secret, url)
+    //        val currencyPairs = marginClient.currencyPairs().body()!!.map { it.id }
+    //        println("currencyPairs: ${currencyPairs.filter { it.contains("BTC") }}")
+    //        currencyPairs
+    //            .filter { it=="BTC_USDT" }
+    //            .take(1)
+    //            .forEachIndexed { index, s ->
+    //                val r = gateio.GateIoWebSocketClient.Request(
+    //                    id = index.toLong(),
+    //                    time = System.currentTimeMillis()/1000,
+    //                    channel = "spot.tickers",
+    //                    event = gateio.GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+    //                    payload = listOf(s),
+    //                )
+    //                send(r)
+    //            }
+    //        GateIoWebSocketClient.Request(
+    //            time = System.currentTimeMillis() / 1000,
+    //            channel = "spot.orders",
+    //            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+    //            payload = listOf("BTC_USDT"),
+    //            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
+    //        ).also {
+    //            send(it)
+    //        }
+            GateIoWebSocketClient.Request(
+                time = System.currentTimeMillis() / 1000,
+                channel = "spot.cross_balances",
+                event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+                authData = GateIoWebSocketClient.Request.AuthData(key, secret)
+            ).also(::send)
+    //        GateIoWebSocketClient.Request(
+    //            time = System.currentTimeMillis() / 1000,
+    //            channel = "spot.cross_loan",
+    //            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+    //            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
+    //        ).also {
+    //            send(it)
+    //        }
+    //        GateIoWebSocketClient.Request(
+    //            time = System.currentTimeMillis() / 1000,
+    //            channel = "spot.usertrades",
+    //            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+    //            payload = listOf("!all"),
+    //            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
+    //        ).also {
+    //            send(it)
+    //        }
+    //        GateIoWebSocketClient.Request(
+    //            System.currentTimeMillis() / 1000,
+    //            channel = "spot.order_book_update",
+    //            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+    //            payload = listOf("BTC_USDT", "100ms")
+    //        ).also(::send)
+            GateIoWebSocketClient.Request(
+                System.currentTimeMillis() / 1000,
+                channel = "spot.balances",
+                event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
+                authData = GateIoWebSocketClient.Request.AuthData(key, secret)
+            ).also(::send)
         }
-    })
-    GateIoWebSocketClient("wss://api.gateio.ws", ServiceGenerator.client, listener).apply {
-        connect()
-//        val marginClient = GateIoMarginClient(key, secret, url)
-//        val currencyPairs = marginClient.currencyPairs().body()!!.map { it.id }
-//        println("currencyPairs: ${currencyPairs.filter { it.contains("BTC") }}")
-//        currencyPairs
-//            .filter { it=="BTC_USDT" }
-//            .take(1)
-//            .forEachIndexed { index, s ->
-//                val r = gateio.GateIoWebSocketClient.Request(
-//                    id = index.toLong(),
-//                    time = System.currentTimeMillis()/1000,
-//                    channel = "spot.tickers",
-//                    event = gateio.GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-//                    payload = listOf(s),
-//                )
-//                send(r)
-//            }
-//        GateIoWebSocketClient.Request(
-//            time = System.currentTimeMillis() / 1000,
-//            channel = "spot.orders",
-//            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-//            payload = listOf("BTC_USDT"),
-//            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
-//        ).also {
-//            send(it)
-//        }
-        GateIoWebSocketClient.Request(
-            time = System.currentTimeMillis() / 1000,
-            channel = "spot.cross_balances",
-            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
-        ).also(::send)
-//        GateIoWebSocketClient.Request(
-//            time = System.currentTimeMillis() / 1000,
-//            channel = "spot.cross_loan",
-//            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-//            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
-//        ).also {
-//            send(it)
-//        }
-//        GateIoWebSocketClient.Request(
-//            time = System.currentTimeMillis() / 1000,
-//            channel = "spot.usertrades",
-//            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-//            payload = listOf("!all"),
-//            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
-//        ).also {
-//            send(it)
-//        }
-//        GateIoWebSocketClient.Request(
-//            System.currentTimeMillis() / 1000,
-//            channel = "spot.order_book_update",
-//            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-//            payload = listOf("BTC_USDT", "100ms")
-//        ).also(::send)
-        GateIoWebSocketClient.Request(
-            System.currentTimeMillis() / 1000,
-            channel = "spot.balances",
-            event = GateIoWebSocketClient.Request.Method.SUBSCRIBE,
-            authData = GateIoWebSocketClient.Request.AuthData(key, secret)
-        ).also(::send)
-    }
-    Thread.sleep(6000000L)
+        Thread.sleep(6000000L)
+     */
 }

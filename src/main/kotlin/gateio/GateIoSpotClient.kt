@@ -113,6 +113,15 @@ class GateIoSpotClient(
 
     fun accounts() = ServiceGenerator.executeSync(service.accounts())
 
+    fun withdrawStatus(currency: String? = null) = ServiceGenerator.executeSync(service.withdrawStatus(currency))
+
+    fun currencyChains(currency: String) = ServiceGenerator.executeSync(service.currencyChains(currency))
+
+    fun generateCurrencyDepositAddress(currency: String) =
+        ServiceGenerator.executeSync(service.generateCurrencyDepositAddress(currency))
+
+    fun withdraw(params: Map<String, String>) = ServiceGenerator.executeSync(service.withdraw(params))
+
     interface GateIoApiServiceSpot {
         @GET("api/v4/spot/currency_pairs")
         fun currencyPairs(): Call<List<CurrencyPair>>
@@ -427,6 +436,90 @@ class GateIoSpotClient(
             val available: BigDecimal,
             val locked: BigDecimal,
         )
-    }
 
+        @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
+        @GET("api/v4/wallet/withdraw_status")
+        fun withdrawStatus(@Query("currency") currency: String?): Call<List<WithdrawStatus>>
+
+        data class WithdrawStatus(
+            val currency: String,
+            val name: String,
+            @JsonProperty("name_cn")
+            val nameCn: String,
+            val deposit: Int,
+            @JsonProperty("withdraw_percent")
+            val withdrawPercent: String,
+            @JsonProperty("withdraw_fix")
+            val withdrawFix: BigDecimal,
+            @JsonProperty("withdraw_day_limit")
+            val withdrawDayLimit: BigDecimal,
+            @JsonProperty("withdraw_amount_mini")
+            val withdrawAmountMini: BigDecimal,
+            @JsonProperty("withdraw_day_limit_remain")
+            val withdrawDayLimitRemain: BigDecimal,
+            @JsonProperty("withdraw_eachtime_limit")
+            val withdrawEachtimeLimit: BigDecimal,
+            @JsonProperty("withdraw_fix_on_chains")
+            val withdrawFixOnChains: Map<String, BigDecimal>?,
+        )
+
+        @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
+        @GET("api/v4/wallet/currency_chains")
+        fun currencyChains(@Query("currency") currency: String): Call<List<CurrencyChain>>
+
+        data class CurrencyChain(
+            @JsonProperty("chain")
+            val chain: String,
+            @JsonProperty("name_cn")
+            val nameCn: String,
+            @JsonProperty("name_en")
+            val nameEn: String,
+            @JsonProperty("is_disabled")
+            val isDisabled: Int,
+            @JsonProperty("is_deposit_disabled")
+            val isDepositDisabled: Int,
+            @JsonProperty("is_withdraw_disabled")
+            val isWithdrawDisabled: Int,
+        )
+
+        @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
+        @GET("api/v4/wallet/deposit_address")
+        fun generateCurrencyDepositAddress(
+            @Query("currency") currency: String,
+        ): Call<GenerateCurrencyDepositAddress>
+
+        data class GenerateCurrencyDepositAddress(
+            @JsonProperty("currency")
+            val currency: String,
+            @JsonProperty("address")
+            val address: String,
+            @JsonProperty("multichain_addresses")
+            val multichainAddresses: List<MultichainAddress>
+        ) {
+            data class MultichainAddress(
+                val chain: String,
+                val address: String,
+                @JsonProperty("payment_id")
+                val paymentId: String,
+                @JsonProperty("payment_name")
+                val paymentName: String,
+                @JsonProperty("obtain_failed")
+                val obtainFailed: Int,
+            )
+        }
+
+        @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
+        @POST("api/v4/withdrawals")
+        fun withdraw(
+            @Body text: Map<String, String?>,
+        ): Call<Withdraw>
+
+        data class Withdraw(
+            val currency: String,
+            val address: String,
+            val amount: BigDecimal,
+            val memo: String,
+            val chain: String,
+        )
+    }
 }
