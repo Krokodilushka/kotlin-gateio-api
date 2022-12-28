@@ -37,16 +37,22 @@ fun main() {
 //            println(it)
 //        }
 //        time().body()?.also(::println)
-        withdrawStatus().body()?.forEach {
-            println(it)
+//        withdrawStatus().body()?.forEach {
+//            println(it)
 //            currencyChains(it.currency).body()!!.forEach(::println)
-        }
+//        }
 //        currencyChains("GOD").body()?.also {
 //            println(it)
 //        }
-//        generateCurrencyDepositAddress("WTC").body()?.also {
+//        generateCurrencyDepositAddress("BTC").body()?.also {
 //            println(it)
 //        }
+//        depositRecords().body()?.forEach {
+//            println(it)
+//        }
+        withdrawalRecords().body()?.forEach {
+            println(it)
+        }
     }
 
     GateIoMarginClient(key, secret, url).apply {

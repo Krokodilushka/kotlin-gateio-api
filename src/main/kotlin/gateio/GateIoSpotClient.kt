@@ -130,6 +130,14 @@ class GateIoSpotClient(
         offset: Int? = null,
     ) = ServiceGenerator.executeSync(service.depositRecords(currency, from, to, limit, offset))
 
+    fun withdrawalRecords(
+        currency: String? = null,
+        from: Long? = null,
+        to: Long? = null,
+        limit: Int? = null,
+        offset: Int? = null,
+    ) = ServiceGenerator.executeSync(service.withdrawalRecords(currency, from, to, limit, offset))
+
     interface GateIoApiServiceSpot {
         @GET("api/v4/spot/currency_pairs")
         fun currencyPairs(): Call<List<CurrencyPair>>
@@ -522,13 +530,34 @@ class GateIoSpotClient(
             @Body text: Map<String, String?>,
         ): Call<Withdraw>
 
+        @JsonIgnoreProperties(ignoreUnknown = true)
         data class Withdraw(
+            val id: String,
+            val timestamp: Long,
             val currency: String,
             val address: String,
+            val txid: String?,
             val amount: BigDecimal,
             val memo: String,
-            val chain: String,
-        )
+            val status: Status,
+            val chain: String?,
+        ) {
+            enum class Status {
+                DONE,
+                CANCEL,
+                REQUEST,
+                MANUAL,
+                BCODE,
+                EXTPEND,
+                FAIL,
+                INVALID,
+                VERIFY,
+                PROCES,
+                PEND,
+                DMOVE,
+                SPLITPEND,
+            }
+        }
 
         @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
         @GET("api/v4/wallet/deposits")
@@ -550,7 +579,6 @@ class GateIoSpotClient(
             val memo: String,
             val status: Status,
             val chain: String,
-            val fee: BigDecimal?,
         ) {
             enum class Status {
                 DONE,
@@ -568,5 +596,28 @@ class GateIoSpotClient(
                 SPLITPEND,
             }
         }
+
+        @Headers(HEADER_AUTH_RETROFIT_HEADER, "Content-Type: application/json")
+        @GET("api/v4/wallet/withdrawals")
+        fun withdrawalRecords(
+            @Query("currency") currency: String?,
+            @Query("from") from: Long?,
+            @Query("to") to: Long?,
+            @Query("limit") limit: Int?,
+            @Query("offset") offset: Int?,
+        ): Call<List<WithdrawalRecord>>
+
+        data class WithdrawalRecord(
+            val id: String,
+            val timestamp: Long,
+            val currency: String,
+            val address: String,
+            val txid: String,
+            val amount: BigDecimal,
+            val fee: BigDecimal,
+            val memo: String,
+            val status: DepositRecord.Status,
+            val chain: String,
+        )
     }
 }
