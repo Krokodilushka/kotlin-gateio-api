@@ -214,7 +214,7 @@ class GateIoSpotClient(
                 @JsonProperty("filled_total")
                 val filledTotal: BigDecimal,
                 @JsonProperty("avg_deal_price")
-                val avgDealPrice: BigDecimal,
+                val avgDealPrice: BigDecimal?,
                 val fee: BigDecimal,
                 @JsonProperty("fee_currency")
                 val feeCurrency: String,
